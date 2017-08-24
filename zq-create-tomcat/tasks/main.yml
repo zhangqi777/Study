@@ -1,0 +1,47 @@
+---
+
+- name: create | 检测用户
+  shell: "grep '^{{ app_user }}:' /etc/passwd|grep 'bash$'|awk -F':' '{print $(NF-1)}'"
+  register: check_user
+
+- name: create | 创建tomcat主目录
+  file: 
+    path: "{{ check_user.stdout }}/tomcat"
+    state: directory
+  register: project_root
+  when: check_user.stdout
+
+- name: create | 解压tomcat包
+  unarchive:
+    src: "apache-{{ tomcat_version }}.tar.gz"
+    dest: "{{ project_root.path }}"
+    creates: "{{ project_root.path }}/{{ project_name }}/bin/version.sh"
+  when: check_user.stdout
+
+- name: create | 检测原目录解压的tomcat版本
+  stat:
+    path: "{{ project_root.path }}/apache-{{ tomcat_version }}"
+  register: check_src_directory
+
+- name: create | 检测目标项目目录
+  stat:
+    path: "{{ project_root.path }}/{{ project_name }}"
+  register: check_dest_directory
+
+- name: create | 创建项目目录
+  shell: "mv {{ check_src_directory.stat.path }} {{ project_root.path }}/{{ project_name }}"
+  when: 
+    - check_src_directory.stat.exists
+    - not check_dest_directory.stat.exists
+
+- name: create | 设置项目端口
+  replace:
+    dest: "{{ project_root.path }}/{{ project_name }}/conf/server.xml"
+    regexp: "project_port"
+    replace: "{{ project_port }}"
+
+- name: create | 设置项目jmx端口
+  replace:
+    dest: "{{ project_root.path }}/{{ project_name }}/bin/catalina.sh"
+    regexp: "jmx_port"
+    replace: "{{ jmx_port }}"
