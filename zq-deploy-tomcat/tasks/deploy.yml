@@ -1,0 +1,79 @@
+---
+# author: zhangqi
+
+- name: deloy | 解压代码至目标服务器
+  unarchive:
+    src: "{{ deploy_file }}"
+    dest: "{{ deploy_path_home.path }}"
+  tags: update
+
+- name: deloy | 查看软链接状态
+  stat:
+    path: "{{ deploy_service_home }}/{{ deploy_service_type }}/{{ deploy_service_name }}/webapps/{{ deploy_service_name }}"
+  register: state_link
+  tags:
+    - update
+    - rollback
+  
+- name: deloy | 删除旧的软链接(true)
+  file:
+    path: "{{ state_link.stat.path }}"
+    state: absent
+  register: deploy_link
+  when:  state_link.stat.exists
+  tags:
+    - update
+    - rollback
+
+- name: deloy | 查找的最后一个版本
+  shell: "ls -lt {{ deploy_new_path }}/{{ deploy_service_type }}/{{ deploy_service_name }}/|head -3|tail -1|awk '{print $NF}'"
+  register: last_version
+  tags: rollback
+
+- name: deloy | 创建新的软链接部署上线代码
+  file:
+    src: "{{ deploy_path_home.path }}"
+    dest: "{{ deploy_service_home }}/{{ deploy_service_type }}/{{ deploy_service_name }}/webapps/{{ deploy_service_name }}"
+    state: link
+  tags: update
+
+- name: deloy | 创建新的软链接部署回滚代码
+  file:
+    src: "{{ deploy_new_path }}/{{ deploy_service_type }}/{{ deploy_service_name }}/{{ last_version.stdout }}"
+    dest: "{{ deploy_link.path }}"
+    state: link
+  tags: rollback
+
+- name: deloy | 删除上次失败版本
+  file:
+    path: "{{ state_link.stat.lnk_source }}"
+    state: absent
+  tags: rollback
+  
+- name: deloy | 获取应用的PID
+  shell: "ps -ef|grep '{{ deploy_service_home }}/{{ deploy_service_type }}/{{ deploy_service_name }}/'|grep -v grep |awk '{print $2}'"
+  register: deploy_pid
+  tags:
+    - update
+    - rollback
+
+- name: deloy | 关闭应用程序
+  shell: "kill -9 {{ deploy_pid.stdout }}"
+  when: deploy_pid.stdout
+  tags:
+    - update
+    - rollback
+
+- name: deloy | 清除应用缓存
+  file:
+    path: "{{ deploy_service_home }}/{{ deploy_service_type }}/{{ deploy_service_name }}/work/Catalina/localhost"
+    state: absent
+  tags:
+    - update
+    - rollback
+
+- name: deloy | 启动应用程序
+  shell: "source {{ deploy_service_home }}/.bash_profile && nohup {{ deploy_service_home }}/{{ deploy_service_type }}/{{ deploy_service_name }}/bin/startup.sh & >> /dev/null"
+  tags:
+    - update
+    - rollback

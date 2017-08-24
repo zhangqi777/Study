@@ -1,0 +1,23 @@
+---
+# author: zhangqi
+
+# 发布的代码文件，包含绝对路径，如:/tmp/test.war
+deploy_file: ""
+
+# tomcat服务的端口
+deploy_port: "8080"
+
+# tomcat服务用户
+deploy_service_user: ""
+
+# tomcat服务类型   APP_TYPE
+deploy_service_type: "tomcat"
+
+# tomcat服务用户家目录   USER_ROOT
+deploy_service_home: "/home/{{ deploy_service_user }}"
+
+# tomcat服务的名称   PROJECT_NAME
+deploy_service_name: ""
+
+# 上线代码的存储目录  DEPLOY_ROOT
+deploy_new_path: "{{ deploy_service_home }}/deploy"

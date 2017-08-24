@@ -1,0 +1,7 @@
+---
+# author: zhangqi
+
+# 1. 进行发布前检查，发布所需要的内容不存在时停止执行并抛出错误信息
+- include: check.yml
+# 2. 发布代码到目标服务器
+- include: deploy.yml

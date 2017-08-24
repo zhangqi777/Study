@@ -1,0 +1,15 @@
+---
+# author: zhangqi
+
+- name: check | 获取上线日期
+  shell: "date +%Y-%m-%d_%H:%M:%S"
+  register: deploy_dateline
+  tags: update  
+
+- name: check | 新目录的创建日期
+  file:
+    path: "{{ deploy_new_path }}/{{ deploy_service_type }}/{{ deploy_service_name }}/{{ deploy_dateline.stdout }}"
+    state: directory
+  register: deploy_path_home
+  tags: update 
+
