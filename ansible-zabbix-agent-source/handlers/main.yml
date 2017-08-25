@@ -1,0 +1,17 @@
+---
+# handlers file for zabbix-agent
+- name: "Make sure the zabbix-agent and RedHat 7 service is running"
+  systemd: name={{ zabbix_agent_package }}
+           state=restarted
+           enabled=yes
+  when: ansible_distribution_major_version == "7"
+  become: yes
+
+- name: "Make sure the zabbix-agent and RedHat 6 service is running"
+  service: name={{ zabbix_agent_package }}
+           state=restarted
+           enabled=yes
+  when: ansible_distribution_major_version == "6"
+  tags:
+    - init
+    - service

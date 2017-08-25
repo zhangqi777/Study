@@ -1,0 +1,79 @@
+---
+# Tasks specific for RedHat systems
+
+- name: "RedHat | Set short version name"
+  set_fact:
+      zabbix_short_version: "{{ zabbix_version | regex_replace('\\.', '') }}"
+  tags:
+    - zabbix-agent
+    - init
+
+
+#- name: "RedHat | Use EPEL package name"
+#  set_fact:
+#      zabbix_agent_package: "zabbix-agentd"
+#      rpm_src: "./files/zabbix-agent-{{ zabbix_short_version }}.rhel{{ ansible_distribution_major_version }}.{{ ansible_architecture }}.tar.gz"
+#      rpm_dest: "/tmp/zabbix-agent-{{ zabbix_short_version }}.rhel{{ ansible_distribution_major_version }}.{{ ansible_architecture }}.tar.gz"
+#  when: zabbix_repo == "local"
+#  tags:
+#    - zabbix-agent
+#    - init
+
+#- name: "RedHat | copy Installing zabbix-agent"
+#  copy:
+#    src: "{{ rpm_src }}"
+#    dest: "{{ rpm_dest }}"
+#  when: zabbix_repo == "local"
+#  become: yes
+#  tags:
+#    - init
+#    - zabbix-agent
+
+- name: "RedHat | Extract archive zabbix-agent"
+  unarchive:
+    src: "./files/zabbix-agent-{{ zabbix_short_version }}.rhel{{ ansible_distribution_major_version }}.{{ ansible_architecture }}.tar.gz"
+    dest: "/usr/local"
+  when: zabbix_repo == "local"
+  become: yes
+  tags:
+    - init
+    - zabbix-agent
+
+- name: "RedHat | Use init.d zabbix-agent"
+  template:
+      src: "zabbix-agentd-{{ zabbix_short_version }}.rhel{{ ansible_distribution_major_version }}.{{ ansible_architecture }}.j2"
+      dest: "/etc/init.d/zabbix-agentd"
+      mode: "0755"
+  when: zabbix_repo == "local"
+  tags:
+    - zabbix-agent
+    - init
+
+- name: link zabbix-agentd
+  file:
+    src: /usr/local/zabbix-agent/sbin/zabbix_agentd
+    dest: /usr/local/sbin/zabbix_agentd
+    state: link
+  tags:
+    - init
+    - zabbix-agent
+
+- name: "RedHat | Enable the service"
+  service: name={{ zabbix_agent_package }}
+           enabled=yes
+  when: ansible_distribution_major_version == "6"
+  become: yes
+  tags:
+    - zabbix-agent
+    - init
+    - service
+
+- name: "RedHat | Enable the service"
+  systemd: name={{ zabbix_agent_package }}
+           enabled=yes
+  when: ansible_distribution_major_version == "7"
+  become: yes
+  tags:
+    - zabbix-agent
+    - init
+    - service
