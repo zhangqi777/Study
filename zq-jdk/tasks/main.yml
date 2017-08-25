@@ -1,0 +1,37 @@
+---
+- name: main | 检测用户
+  shell: "grep '^{{ app_user }}:' /etc/passwd|grep 'bash$'|awk -F':' '{print $(NF-1)}'"
+  register: check_user
+# - name: debug
+#   debug:
+#     msg: "{{ check_user.stdout }}"
+- name: main | 创建工作目录
+  file: 
+    path: "{{ JAVA_ROOT }}"
+    state: directory
+  when: check_user.stdout
+
+- name: main | 解压JAVA执行工作目录
+  unarchive:
+    src: "{{ jdk_version }}-{{ ansible_architecture }}.tar.gz"
+    dest: "{{ JAVA_ROOT }}"
+    creates: "{{ JAVA_BIN }}"
+    owner: root
+    group: root
+  when: check_user.stdout
+
+- name: main | 设置JAVA_HOME变量
+  lineinfile: 
+    dest: "{{ check_user.stdout }}/.bash_profile"
+    state: present
+    regexp: "{{ item.reg }}"
+    line: "{{ item.line }}"
+  with_items:
+    - reg: "^export JAVA_HOME="
+      line: "export JAVA_HOME={{ JAVA_CURRENT_ROOT }}"
+    - reg: "^export CLASSPATH="
+      line: "export CLASSPATH=.:$JAVA_HOME/lib/dt.jar:$JAVA_HOME/lib/tools.jar"
+    - reg: "^export PATH="
+      line: "export PATH=$JAVA_HOME/bin:$PATH"
+  when:
+    - check_user.stdout
