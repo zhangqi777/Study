@@ -13,12 +13,12 @@ os `Centos 6.7 X64`
 python `2.6.6`
 
 ## 应用信息
-
-tomcat_version: support tomcat-7.0.73 tomcat-8.0.44
-app_user: support any user, for run application
-project_name: target location does not exist
-project_port: service listen port
-jmx_port: for monitor
+    # 注销
+    tomcat_version: support tomcat-7.0.73 tomcat-8.0.44
+    app_user: support any user, for run application
+    project_name: target location does not exist
+    project_port: service listen port
+    jmx_port: for monitor
 
 ## 角色变量
     # 工作目录
